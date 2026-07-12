@@ -1,10 +1,15 @@
+# Pinned to a working combo on Windows + Python 3.10 (verified 2026-07-12).
+# NOTE: mediapipe>=0.10.35 dropped the legacy mp.solutions.pose API this project uses,
+# and mediapipe 0.10.21 requires numpy<2, which in turn requires opencv-python 4.x.
 torch
 torchvision
 torchaudio
 torch-geometric
-mediapipe
-opencv-python
+mediapipe==0.10.21
+numpy<2
+opencv-python==4.11.0.86
 pandas
-numpy
-matplotlib
 scikit-learn
+matplotlib
+fastapi
+uvicorn[standard]

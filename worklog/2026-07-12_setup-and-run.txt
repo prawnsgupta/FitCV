@@ -1,0 +1,50 @@
+WORKLOG — Final FitCV code (AI-FITNESS-TRACKER) setup & run
+Date: 2026-07-12
+Machine: Windows 11, Python 3.10.11, git 2.52.0
+
+WHAT THIS PROJECT IS
+- Live webcam posture-correction app. NOT Gemini-based.
+- Pipeline: MediaPipe Pose (33 landmarks) -> feature extraction (99 coords + 12 joint
+  angles = 111 features) -> PINN kinematic layer (velocity/accel) -> ST-GCN (spatial) ->
+  Transformer + LSTM (temporal) -> classify correct/error + rep counting.
+- Two entry points: web app (FastAPI, app.py, uvicorn) and desktop (main.py, OpenCV window).
+- Ships pretrained weights in weights/ (5 exercises) and a CSV dataset in dataset/.
+
+ENVIRONMENT SETUP
+- Cloned from https://github.com/sooryanatarajan/AI-FITNESS-TRACKER
+- Created venv at ./venv (python -m venv venv), upgraded pip.
+- Installed: torch torchvision torchaudio, mediapipe, opencv-python, pandas, numpy,
+  matplotlib, scikit-learn, fastapi, uvicorn[standard], jinja2, torch-geometric.
+
+EDGE CASES / FIXES (important for reproducibility)
+1. mediapipe latest (0.10.35) ships ONLY the new `tasks` API — the legacy
+   `mp.solutions.pose` used by this code is GONE ("No module named mediapipe.solutions").
+   FIX: pinned mediapipe==0.10.21 (still has legacy solutions).
+2. mediapipe 0.10.21 requires numpy<2. Installed numpy 1.26.4.
+3. numpy<2 then conflicted with opencv-python 5.x (needs numpy>=2).
+   FIX: pinned opencv-python==4.11.0.86 (works with numpy<2).
+   Working combo: mediapipe 0.10.21 + numpy 1.26.4 + opencv-python 4.11.0.86.
+4. FastAPI/Starlette installed are new (fastapi 0.139.0 / starlette 1.3.1). The old
+   Jinja2 call `templates.TemplateResponse("index.html", {"request": request})` crashed
+   with `TypeError: unhashable type: 'dict'` (new signature is TemplateResponse(request, name)).
+   The index page has no template variables, so FIX in app.py: serve the static file
+   directly via FileResponse("static/index.html") and drop Jinja2Templates entirely.
+   Edits: removed Jinja2Templates import + `templates=...`; added FileResponse import;
+   root route returns FileResponse.
+
+VERIFICATION (all passed, headless)
+- Imports: torch 2.13.0+cpu, mediapipe 0.10.21, cv2 4.11.0, torch_geometric 2.8.0, fastapi, uvicorn.
+- Model load + forward: load_model('Squat') -> PostureModel OK.
+- Server boot: uvicorn app:app -> GET / = HTTP 200 (11303 bytes, title "AI Posture Coach"),
+  GET /state = OK JSON, POST /set_mode/Squat = {"status":"success"}.
+- CUDA not available -> runs on CPU (fine for inference).
+- /video_feed needs webcam (camera 0); runs when opened in a browser on this machine.
+
+HOW TO RUN
+- Web:      venv\Scripts\python.exe -m uvicorn app:app --reload   then open http://localhost:8000
+- Desktop:  venv\Scripts\python.exe main.py   (keys P/S/B/L/R to pick exercise, Q to quit)
+
+PENDING
+- Upload to prawnsgupta/FitCV (awaiting user approval).
+- Consider writing a pinned requirements.txt (mediapipe==0.10.21, numpy==1.26.4,
+  opencv-python==4.11.0.86, + fastapi/uvicorn) before upload for reproducibility.

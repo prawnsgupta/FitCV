@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 import cv2
 import mediapipe as mp
 import numpy as np
@@ -19,7 +18,6 @@ if not os.path.exists("static"):
     os.makedirs("static")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="static")
 
 mp_pose = mp.solutions.pose
 pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
@@ -40,7 +38,7 @@ camera = cv2.VideoCapture(CAMERA_ID)
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+    return FileResponse("static/index.html")
 
 @app.post("/set_mode/{mode}")
 async def set_mode(mode: str):
