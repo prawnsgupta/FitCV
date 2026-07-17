@@ -7,19 +7,12 @@ from collections import deque
 from config import DEVICE, WINDOW_SIZE, NUM_LANDMARKS, NUM_FEATURES, FEEDBACK_MAP, ERROR_CONNECTIONS, CAMERA_ID
 from model import PostureModel
 from rep_counter import RepCounter
+from features import calculate_angle, normalize_landmarks
 
 # Initialize Mediapipe Pose
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils
 pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
-
-def calculate_angle(a, b, c):
-    """Calculates the angle between three points (b is the vertex)"""
-    a = np.array(a); b = np.array(b); c = np.array(c)
-    ba = a - b; bc = c - b
-    cosine_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc) + 1e-6)
-    angle = np.arccos(np.clip(cosine_angle, -1.0, 1.0))
-    return np.degrees(angle)
 
 def get_angles(frame_landmarks):
     angles = []
@@ -41,21 +34,6 @@ def get_angles(frame_landmarks):
     angles.append(calculate_angle(frame_landmarks[25], frame_landmarks[27], frame_landmarks[31])) # L_Ankle
     angles.append(calculate_angle(frame_landmarks[26], frame_landmarks[28], frame_landmarks[32])) # R_Ankle
     return np.array(angles) / 180.0
-
-def normalize_landmarks(points):
-    """Centers the skeleton around the hips and scales by torso length."""
-    points = np.array(points)
-    hip_mid = (points[23] + points[24]) / 2.0
-    centered = points - hip_mid
-    
-    shoulder_mid = (points[11] + points[12]) / 2.0
-    torso_length = np.linalg.norm(shoulder_mid - hip_mid)
-    
-    if torso_length > 1e-6:
-        normalized = centered / torso_length
-    else:
-        normalized = centered
-    return normalized
 
 def extract_features(results):
     if not results.pose_landmarks:

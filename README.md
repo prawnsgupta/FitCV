@@ -1,4 +1,6 @@
-# AI Fitness Tracker
+# FitCV — AI Fitness Tracker
+
+[![CI](https://github.com/prawnsgupta/FitCV/actions/workflows/ci.yml/badge.svg)](https://github.com/prawnsgupta/FitCV/actions/workflows/ci.yml)
 
 An AI-powered fitness tracking application that uses computer vision and deep learning to recognize exercises, count repetitions, and provide real-time posture correction using a webcam.
 
@@ -67,8 +69,8 @@ The prediction pipeline consists of the following stages:
 Clone the repository:
 
 ```
-git clone https://github.com/sooryanatarajan/AI-FITNESS-TRACKER.git
-cd AI-FITNESS-TRACKER
+git clone https://github.com/prawnsgupta/FitCV.git
+cd FitCV
 ```
 
 Install the required packages:
@@ -165,11 +167,54 @@ AI-FITNESS-TRACKER/
 
 ## Future Improvements
 
+- Held-out per-clip validation split + reported test accuracy
 - Additional exercise support
 - Personalized workout analytics
 - Mobile application
 - Workout history and progress tracking
 - Improved pose estimation and model accuracy
+
+---
+
+## Model card — shipped checkpoints
+
+Five per-exercise checkpoints ship in `weights/`, trained on the recorded landmark
+dataset in `dataset/` (~950 labelled clips). Verified with `offline_eval.py`
+(headless, no webcam needed):
+
+| Exercise | Classes | Windows | In-sample accuracy |
+|---|---|---|---|
+| Push-up | 5 | 856 | 100.0% |
+| Squat | 3 | 372 | 99.7% |
+| Bicep Curl | 4 | 936 | 100.0% |
+| Lateral Raise | 3 | 882 | 100.0% |
+| Bent-Over Row | 4 | 1028 | 100.0% |
+
+> **Caveat:** `train.py` fits on all windows (no held-out split), so these are
+> **in-sample** numbers — they verify that the shipped weights, feature pipeline
+> (99 normalized coordinates + 12 biomechanical angles), and label maps are
+> consistent end-to-end, not generalisation to unseen recordings. A held-out,
+> per-clip split is the top item under Future Improvements.
+
+Reproduce:
+
+```
+python offline_eval.py                  # all exercises
+python offline_eval.py --mode Squat     # one exercise
+```
+
+---
+
+## Attribution
+
+The model architecture, dataset, and training pipeline were built by
+[Soorya Natarajan](https://github.com/sooryanatarajan) (original repo:
+AI-FITNESS-TRACKER). This fork adds productionization by
+[Priyansh Gupta](https://github.com/prawnsgupta): the pinned dependency set
+(see `requirements.txt` — newer MediaPipe drops the legacy `mp.solutions` Pose
+API), FastAPI fixes, headless offline evaluation (`offline_eval.py`), shared
+`features.py` (training/eval no longer initialise the MediaPipe camera stack),
+CI, and documentation.
 
 ---
 

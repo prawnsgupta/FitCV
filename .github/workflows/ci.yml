@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  eval-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install headless dependencies (no mediapipe/cv2 needed)
+        run: |
+          python -m pip install --upgrade pip
+          pip install "numpy<2" pandas scikit-learn
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install torch-geometric
+
+      - name: Verify checkpoints load and classify (offline smoke)
+        run: |
+          python offline_eval.py --mode Squat --limit 64
+          python offline_eval.py --mode Pushup --limit 64

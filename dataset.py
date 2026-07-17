@@ -4,7 +4,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from config import DATA_DIR, WINDOW_SIZE, NUM_LANDMARKS, NUM_FEATURES, FEEDBACK_MAP
-from main import normalize_landmarks
+from features import normalize_landmarks
 
 def calculate_angle(a, b, c):
     """Calculates the angle between three points (b is the vertex)"""
